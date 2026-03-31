@@ -292,18 +292,18 @@ const seedDB = async () => {
 
   // ── Admin user ──────────────────────────────────────────────────────────────
   await User.create({
-    name:     "Admin MAISON",
-    email:    "admin@maison.in",
-    password: "Admin@123",
+    name:     process.env.ADMIN_NAME,
+    email:    process.env.ADMIN_EMAIL,
+    password: process.env.ADMIN_PASSWORD,
     role:     "admin",
     emailVerified: true,
   });
 
   // ── Demo user ───────────────────────────────────────────────────────────────
   await User.create({
-    name:     "Arjun Kapoor",
-    email:    "arjun@example.com",
-    password: "User@123",
+    name:     process.env.DEMO_USER_NAME,
+    email:    process.env.DEMO_USER_EMAIL,
+    password: process.env.DEMO_USER_PASSWORD,
     role:     "user",
     emailVerified: true,
   });
@@ -318,8 +318,8 @@ const seedDB = async () => {
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("  MAISON Database Seeded Successfully!");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log(`  🔑 Admin:  admin@maison.in   / Admin@123`);
-  console.log(`  👤 User:   arjun@example.com / User@123`);
+  console.log(`  🔑 Admin:  ${process.env.ADMIN_EMAIL || "admin@maison.in"}   / ${process.env.ADMIN_PASSWORD || "Admin@123"}`);
+  console.log(`  👤 User:   ${process.env.DEMO_USER_EMAIL || "arjun@example.com"} / ${process.env.DEMO_USER_PASSWORD || "User@123"}`);
   console.log(`  📦 Products seeded: ${inserted.length}`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
