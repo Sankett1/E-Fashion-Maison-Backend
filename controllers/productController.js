@@ -1,4 +1,4 @@
-﻿import Product from "../models/Product.js";
+import Product from "../models/Product.js";
 import { cloudinary } from "../config/cloudinary.js";
 
 export const getProducts = async (req, res, next) => {
@@ -28,6 +28,9 @@ export const getProductById = async (req, res, next) => {
 export const createProduct = async (req, res, next) => {
   try {
     const images = req.files?.map(f => ({ public_id: f.filename, url: f.path })) || [];
+    if (images.length === 0) {
+      return res.status(400).json({ success: false, message: "At least one product image is required." });
+    }
     const product = await Product.create({ ...req.body, images });
     res.status(201).json({ success: true, product });
   } catch (error) { next(error); }
@@ -37,8 +40,46 @@ export const updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
-    if (req.files?.length) { const newImages = req.files.map(f => ({ public_id: f.filename, url: f.path })); req.body.images = [...(product.images || []), ...newImages]; }
-    product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+
+    const { images: _ignored, existingImages, removeImages, ...fields } = req.body;
+
+    // 1. Handle removals
+    let currentImages = [...product.images];
+    if (removeImages) {
+      let toRemove = [];
+      try { toRemove = typeof removeImages === "string" ? JSON.parse(removeImages) : removeImages; }
+      catch { return res.status(400).json({ success: false, message: "removeImages must be a JSON array of public_ids." }); }
+      for (const pid of toRemove) { try { await cloudinary.uploader.destroy(pid); } catch (_) {} }
+      currentImages = currentImages.filter(img => !toRemove.includes(img.public_id));
+    }
+
+    // 2. Handle explicit existingImages list from admin panel
+    if (existingImages !== undefined) {
+      let parsed = [];
+      try { parsed = typeof existingImages === "string" ? JSON.parse(existingImages) : existingImages; }
+      catch { return res.status(400).json({ success: false, message: "existingImages must be a valid JSON array." }); }
+      for (const img of parsed) {
+        if (!img.url || !img.public_id) {
+          return res.status(400).json({ success: false, message: "Each object in existingImages must have both `url` and `public_id`." });
+        }
+      }
+      currentImages = parsed;
+    }
+
+    // 3. Newly uploaded files
+    const newImages = req.files?.map(f => ({ public_id: f.filename, url: f.path })) || [];
+
+    // 4. Merge
+    fields.images = [...currentImages, ...newImages];
+
+    // 5. Parse array fields sent as JSON strings via form-data
+    for (const key of ["sizes", "colors", "tags"]) {
+      if (fields[key] && typeof fields[key] === "string") {
+        try { fields[key] = JSON.parse(fields[key]); } catch {}
+      }
+    }
+
+    product = await Product.findByIdAndUpdate(req.params.id, fields, { new: true, runValidators: true });
     res.json({ success: true, product });
   } catch (error) { next(error); }
 };
