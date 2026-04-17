@@ -3,6 +3,10 @@ import {
   createOrder, getMyOrders, getOrderById,
   markOrderPaid, getAllOrders, updateOrderStatus, getOrderStats,
 } from "../controllers/orderController.js";
+import {
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+} from "../controllers/razorpayController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 import { validateOrder }      from "../middleware/validate.js";
 
@@ -11,6 +15,10 @@ const router = express.Router();
 // ── Admin routes first (must precede /:id wildcard) ───────────────────────────
 router.get("/admin/all",   protect, adminOnly, getAllOrders);
 router.get("/admin/stats", protect, adminOnly, getOrderStats);
+
+// ── Razorpay routes ───────────────────────────────────────────────────────────
+router.post("/razorpay/create",  protect, createRazorpayOrder);
+router.post("/razorpay/verify",  protect, verifyRazorpayPayment);
 
 // ── User routes ───────────────────────────────────────────────────────────────
 router.post("/",           protect, validateOrder, createOrder);
