@@ -22,9 +22,12 @@ router.post("/razorpay/verify",  protect, verifyRazorpayPayment);
 
 // ── User routes ───────────────────────────────────────────────────────────────
 router.post("/",           protect, validateOrder, createOrder);
+router.get("/",            protect, getMyOrders);
 router.get("/my-orders",   protect, getMyOrders);
-router.get("/:id",         protect, getOrderById);
+
+// ── Parameterized routes (specific before generic) ──────────────────────────────
 router.put("/:id/pay",     protect, markOrderPaid);
 router.put("/:id/status",  protect, adminOnly, updateOrderStatus);
+router.get("/:id",         protect, getOrderById);
 
 export default router;

@@ -141,10 +141,40 @@ export const updateAvatar = async (req, res, next) => {
 // ── @route  POST /api/auth/address ─── add address ───────────────────────────
 export const addAddress = async (req, res, next) => {
   try {
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ success: false, message: "Address data is required" });
+    }
     const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
     user.addresses.push(req.body);
     await user.save();
-    res.status(201).json({ success: true, addresses: user.addresses });
+    res.status(201).json({ success: true, addresses: user.addresses, message: "Address added successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ── @route  GET /api/auth/addresses ─────────────────────────────────────────
+export const getAddresses = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    res.json({ success: true, addresses: user.addresses });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ── @route  PUT /api/auth/address/:id ─── update address ──────────────────────
+export const updateAddress = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const address = user.addresses.find(a => a._id.toString() === req.params.id);
+    if (!address) return res.status(404).json({ success: false, message: "Address not found" });
+    Object.assign(address, req.body);
+    await user.save();
+    res.json({ success: true, message: "Address updated successfully", addresses: user.addresses });
   } catch (error) {
     next(error);
   }
@@ -154,9 +184,10 @@ export const addAddress = async (req, res, next) => {
 export const removeAddress = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
     user.addresses = user.addresses.filter(a => a._id.toString() !== req.params.id);
     await user.save();
-    res.json({ success: true, addresses: user.addresses });
+    res.json({ success: true, message: "Address removed successfully", addresses: user.addresses });
   } catch (error) {
     next(error);
   }

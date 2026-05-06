@@ -62,13 +62,22 @@ export const createOrder = async (req, res, next) => {
     }
 
     await order.populate("items.product", "name images");
-    res.status(201).json({ success: true, order });
+    res.status(201).json({ 
+      success: true, 
+      message: `Order created successfully. Status: ${order.status}`, 
+      order,
+      orderNumber: order.orderNumber,
+      nextStep: paymentMethod === "cod" ? "Order confirmed for COD" : "Proceed to payment"
+    });
   } catch (error) { next(error); }
 };
 
 // ── GET /api/orders/my-orders ─────────────────────────────────────────────────
 export const getMyOrders = async (req, res, next) => {
   try {
+    if (!req.user?._id) {
+      return res.status(401).json({ success: false, message: "User not authenticated" });
+    }
     const orders = await Order
       .find({ user: req.user._id })
       .sort({ createdAt: -1 })
@@ -103,8 +112,12 @@ export const getOrderById = async (req, res, next) => {
 // ── PUT /api/orders/:id/pay — generic (fallback, e.g. Stripe) ─────────────────
 export const markOrderPaid = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    const { id } = req.params;
+    if (!id || id.trim() === "") {
+      return res.status(400).json({ success: false, message: "Order ID is required (use PUT /api/orders/:id/pay)" });
+    }
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ success: false, message: `Order not found with ID: ${id}` });
 
     order.isPaid    = true;
     order.paidAt    = new Date();
@@ -118,7 +131,7 @@ export const markOrderPaid = async (req, res, next) => {
     };
     await order.save();
 
-    res.json({ success: true, order });
+    res.json({ success: true, message: "Order marked as paid", order });
   } catch (error) { next(error); }
 };
 
@@ -143,9 +156,16 @@ export const getAllOrders = async (req, res, next) => {
 // ── PUT /api/orders/:id/status ────────────────────────────────────────────────
 export const updateOrderStatus = async (req, res, next) => {
   try {
+    const { id } = req.params;
+    if (!id || id.trim() === "") {
+      return res.status(400).json({ success: false, message: "Order ID is required (use PUT /api/orders/:id/status)" });
+    }
     const { status, trackingNumber, courier } = req.body;
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!status) {
+      return res.status(400).json({ success: false, message: "Status is required" });
+    }
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ success: false, message: `Order not found with ID: ${id}` });
 
     order.status = status;
     if (trackingNumber) order.trackingNumber = trackingNumber;
@@ -175,6 +195,8 @@ export const getOrderStats = async (req, res, next) => {
     const statusBreakdown = await Order.aggregate([
       { $group: { _id: "$status", count: { $sum: 1 } } },
     ]);
-    res.json({ success: true, stats: stats[0] || {}, statusBreakdown });
+    const pendingOrders = await Order.countDocuments({ isPaid: false });
+    const paidOrders = await Order.countDocuments({ isPaid: true });
+    res.json({ success: true, stats: stats[0] || { totalRevenue: 0, totalOrders: 0, avgOrderValue: 0 }, statusBreakdown, summary: { pendingOrders, paidOrders } });
   } catch (error) { next(error); }
 };

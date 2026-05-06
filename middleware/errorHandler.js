@@ -39,7 +39,19 @@ const errorHandler = (err, req, res, next) => {
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 export const notFound = (req, res, next) => {
-  const err = new Error(`Route not found — ${req.originalUrl}`);
+  // Check for malformed URLs with double slashes
+  if (req.originalUrl.includes("//") && !req.originalUrl.startsWith("http")) {
+    const suggestion = req.originalUrl.replace(/\/+/g, "/");
+    const err = new Error(
+      `Malformed URL detected — ${req.originalUrl}\n` +
+      `Did you mean: ${suggestion}?\n` +
+      `Make sure you're providing the required ID parameter (e.g., PUT /api/orders/{orderId}/pay)`
+    );
+    err.statusCode = 400;
+    return next(err);
+  }
+  
+  const err = new Error(`Route not found — ${req.method} ${req.originalUrl}`);
   err.statusCode = 404;
   next(err);
 };

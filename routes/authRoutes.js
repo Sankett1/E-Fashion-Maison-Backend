@@ -2,7 +2,7 @@ import express from "express";
 import {
   register, login, logout,
   getMe, updateProfile, changePassword,
-  updateAvatar, addAddress, removeAddress,
+  updateAvatar, addAddress, removeAddress, getAddresses, updateAddress,
 } from "../controllers/authController.js";
 import { protect }        from "../middleware/auth.js";
 import { uploadAvatar }   from "../config/cloudinary.js";
@@ -25,7 +25,9 @@ router.get("/me",                     protect, getMe);
 router.put("/update-profile",         protect, updateProfile);
 router.put("/change-password",        protect, validateChangePassword, changePassword);
 router.put("/avatar",                 protect, uploadAvatar.single("avatar"), updateAvatar);
+router.get("/addresses",              protect, getAddresses);
 router.post("/address",               protect, validateAddress, addAddress);
+router.put("/address/:id",            protect, validateAddress, updateAddress);
 router.delete("/address/:id",         protect, removeAddress);
 
 export default router;

@@ -6,8 +6,8 @@ const store = new Map(); // { key: { data, expiresAt } }
 // ── Cache middleware factory ──────────────────────────────────────────────────
 // Usage: router.get("/products", cache(60), getProducts)
 export const cache = (ttlSeconds = 60) => (req, res, next) => {
-  // Only cache GET requests without auth
-  if (req.method !== "GET") return next();
+  // Only cache GET requests without auth or body
+  if (req.method !== "GET" || req.user) return next();
 
   const key = req.originalUrl;
   const hit = store.get(key);

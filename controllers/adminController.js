@@ -54,9 +54,12 @@ export const getAllUsers = async (req, res, next) => {
 // ── @route  PUT /api/admin/users/:id ─────────────────────────────────────────
 export const updateUserRole = async (req, res, next) => {
   try {
+    if (!req.body.role) {
+      return res.status(400).json({ success: false, message: "Role is required" });
+    }
     const user = await User.findByIdAndUpdate(req.params.id, { role: req.body.role }, { new: true });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.json({ success: true, user });
+    res.json({ success: true, message: `User role updated to ${req.body.role}`, user });
   } catch (error) {
     next(error);
   }
@@ -67,7 +70,7 @@ export const deactivateUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
-    res.json({ success: true, message: "User deactivated" });
+    res.json({ success: true, message: `User ${user.email} has been deactivated` });
   } catch (error) {
     next(error);
   }

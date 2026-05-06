@@ -49,6 +49,19 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// ── Custom error handler for JSON parsing errors ────────────────────────────────
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid JSON in request body",
+      details: "Please ensure your request body contains valid JSON. Example: { \"key\": \"value\" }",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+  next(err);
+});
+
 // ── Custom request logger ─────────────────────────────────────────────────────
 app.use(requestLogger);
 
