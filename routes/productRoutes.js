@@ -11,26 +11,25 @@ import { cache, bustCache }                 from "../middleware/cache.js";
 
 const router = express.Router();
 
-// ── Public routes (must come before /:id wildcard) ─────────────────────────────
-router.get("/featured",              cache(120), getFeaturedProducts);
+// ── Public (with optional auth for wishlist state) ────────────────────────────
 router.get("/",        optionalAuth, cache(30), getProducts);
+router.get("/featured",              cache(120), getFeaturedProducts);
+router.get("/:id",    optionalAuth,             getProductById);
 
-// ── Admin routes (must come before /:id wildcard) ─────────────────────────────
-router.post("/admin/create",
+// ── User (authenticated) ──────────────────────────────────────────────────────
+router.post("/:id/review",  protect, validateReview, createReview);
+router.put("/:id/wishlist", protect, toggleWishlist);
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+router.post("/",
   protect, adminOnly,
   uploadProduct.array("images", 6),
   validateProduct,
   createProduct
 );
-
-// ── Parameterized routes (/:id and its sub-routes) ───────────────────────────────
-router.get("/:id",    optionalAuth,             getProductById);
-router.post("/:id/review",  protect, validateReview, createReview);
-router.put("/:id/wishlist", protect, toggleWishlist);
 router.put("/:id",
   protect, adminOnly,
   uploadProduct.array("images", 6),
-  validateProduct,
   updateProduct
 );
 router.delete("/:id",                    protect, adminOnly, deleteProduct);

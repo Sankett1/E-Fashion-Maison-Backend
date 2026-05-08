@@ -1,5 +1,4 @@
 ﻿import Product from "../models/Product.js";
-import User from "../models/User.js";
 import { cloudinary } from "../config/cloudinary.js";
 
 export const getProducts = async (req, res, next) => {
@@ -28,12 +27,9 @@ export const getProductById = async (req, res, next) => {
 
 export const createProduct = async (req, res, next) => {
   try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: "At least one product image is required" });
-    }
-    const images = req.files.map(f => ({ public_id: f.filename, url: f.path }));
+    const images = req.files?.map(f => ({ public_id: f.filename, url: f.path })) || [];
     const product = await Product.create({ ...req.body, images });
-    res.status(201).json({ success: true, message: "Product created successfully", product });
+    res.status(201).json({ success: true, product });
   } catch (error) { next(error); }
 };
 
@@ -43,7 +39,6 @@ export const updateProduct = async (req, res, next) => {
     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
     if (req.files?.length) { const newImages = req.files.map(f => ({ public_id: f.filename, url: f.path })); req.body.images = [...(product.images || []), ...newImages]; }
     product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
     res.json({ success: true, product });
   } catch (error) { next(error); }
 };
@@ -78,11 +73,10 @@ export const createReview = async (req, res, next) => {
     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
     const alreadyReviewed = product.reviews.find(r => r.user.toString() === req.user._id.toString());
     if (alreadyReviewed) return res.status(400).json({ success: false, message: "You have already reviewed this product" });
-    const newReview = { user: req.user._id, name: req.user.name, rating: Number(rating), comment };
-    product.reviews.push(newReview);
+    product.reviews.push({ user: req.user._id, name: req.user.name, rating: Number(rating), comment });
     product.recalcRating();
     await product.save();
-    res.status(201).json({ success: true, message: "Review added", review: newReview });
+    res.status(201).json({ success: true, message: "Review added" });
   } catch (error) { next(error); }
 };
 
@@ -95,14 +89,12 @@ export const getFeaturedProducts = async (req, res, next) => {
 
 export const toggleWishlist = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    const user = req.user;
     const productId = req.params.id;
     const idx = user.wishlist.indexOf(productId);
-    if (idx === -1) user.wishlist.push(productId);
-    else user.wishlist.splice(idx, 1);
+    if (idx === -1) user.wishlist.push(productId); else user.wishlist.splice(idx, 1);
     await user.save();
-    await user.populate("wishlist", "name price images");
-    res.json({ success: true, isInWishlist: idx === -1, wishlist: user.wishlist });
+    const populated = await user.populate("wishlist", "name price images");
+    res.json({ success: true, wishlist: populated.wishlist });
   } catch (error) { next(error); }
 };
