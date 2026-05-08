@@ -1,7 +1,7 @@
 import express from "express";
 import {
   getDashboardStats, getAllUsers, updateUserRole,
-  deactivateUser, getRevenueChart,
+  deactivateUser, getRevenueChart, getAnalytics,
 } from "../controllers/adminController.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -15,5 +15,6 @@ router.get("/users",         getAllUsers);
 router.put("/users/:id",     updateUserRole);
 router.delete("/users/:id",  deactivateUser);
 router.get("/revenue-chart", getRevenueChart);
+router.get("/analytics",     getAnalytics);
 
 export default router;

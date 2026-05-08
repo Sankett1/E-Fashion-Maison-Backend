@@ -10,6 +10,7 @@ import authRoutes        from "./routes/authRoutes.js";
 import productRoutes     from "./routes/productRoutes.js";
 import orderRoutes       from "./routes/orderRoutes.js";
 import adminRoutes       from "./routes/adminRoutes.js";
+import siteContentRoutes from "./routes/siteContentRoutes.js";
 import { requestLogger, errorLogger } from "./middleware/logger.js";
 import { sanitize, preventParamPollution } from "./middleware/sanitize.js";
 import { fileSizeGuard } from "./middleware/upload.js";
@@ -92,7 +93,8 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth",     authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders",   orderRoutes);
-app.use("/api/admin",    adminRoutes);
+app.use("/api/admin",         adminRoutes);
+app.use("/api/site-content",  siteContentRoutes);
 
 // ── File upload error handler ─────────────────────────────────────────────────
 app.use(fileSizeGuard(5));
