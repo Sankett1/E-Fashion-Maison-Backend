@@ -3,12 +3,13 @@ import { cloudinary } from "../config/cloudinary.js";
 
 export const getProducts = async (req, res, next) => {
   try {
-    const { keyword, category, minPrice, maxPrice, sort = "-createdAt", page = 1, limit = 12, tag, isFeatured } = req.query;
+    const { keyword, category, minPrice, maxPrice, sort = "-createdAt", page = 1, limit = 12, tag, isFeatured, color } = req.query;
     const query = { isActive: true };
     if (keyword) query.$text = { $search: keyword };
     if (category) query.category = category;
     if (tag) query.tag = tag;
     if (isFeatured) query.isFeatured = isFeatured === "true";
+    if (color) query.colors = { $in: [color] };
     if (minPrice || maxPrice) { query.price = {}; if (minPrice) query.price.$gte = Number(minPrice); if (maxPrice) query.price.$lte = Number(maxPrice); }
     const skip = (Number(page) - 1) * Number(limit);
     const total = await Product.countDocuments(query);
