@@ -2,7 +2,7 @@ import express from "express";
 import {
   getProducts, getProductById,
   createProduct, updateProduct, deleteProduct, deleteProductImage,
-  createReview, getFeaturedProducts, toggleWishlist,
+  createReview, getFeaturedProducts, toggleWishlist, getColorVariants,
 } from "../controllers/productController.js";
 import { protect, adminOnly, optionalAuth } from "../middleware/auth.js";
 import { uploadProduct }                    from "../config/cloudinary.js";
@@ -14,6 +14,7 @@ const router = express.Router();
 // ── Public (with optional auth for wishlist state) ────────────────────────────
 router.get("/",        optionalAuth, cache(30), getProducts);
 router.get("/featured",              cache(120), getFeaturedProducts);
+router.get("/:id/color-variants",               getColorVariants);
 router.get("/:id",    optionalAuth,             getProductById);
 
 // ── User (authenticated) ──────────────────────────────────────────────────────

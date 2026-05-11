@@ -25,6 +25,9 @@ const ProductSchema = new mongoose.Schema(
     subCategory: { type: String },
     sizes:       [{ type: String, enum: ["XS", "S", "M", "L", "XL", "XXL", "28", "30", "32", "34", "36", "38", "39", "40", "41", "42", "43", "44"] }],
     colors:      [{ type: String }],
+    // colorGroup links colour-variant products together (same string = same group)
+    // e.g. "structured-tote-bag" — all colour variants of the same product share this
+    colorGroup:  { type: String, default: null, index: true },
     images:      [ImageSchema],
     stock:       { type: Number, required: true, default: 0, min: 0 },
     sku:         { type: String, unique: true },
